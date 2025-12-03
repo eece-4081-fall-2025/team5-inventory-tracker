@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Tracker MVP</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f3f4f6; }
+        .login-container { min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-box { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 40px; width: 100%; max-width: 400px; }
+        .login-header { text-align: center; margin-bottom: 30px; }
+        .login-header h1 { color: #1f2937; font-size: 28px; margin-bottom: 8px; }
+        .login-header p { color: #6b7280; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #374151; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .btn-login { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        .btn-login:hover { background: #5568d3; }
+        .demo-credentials { margin-top: 24px; padding: 16px; background: #f9fafb; border-radius: 8px; }
+        .demo-credentials p { font-size: 13px; color: #6b7280; margin: 4px 0; }
+        .demo-credentials strong { color: #374151; }
+        .app-container { display: none; min-height: 100vh; }
+        .app-header { background: white; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; }
+        .header-content { max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .header-left h1 { color: #1f2937; font-size: 24px; margin-bottom: 4px; }
+        .header-left p { color: #6b7280; font-size: 14px; }
+        .btn-logout { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
+        .btn-logout:hover { background: #dc2626; }
+        .nav-tabs { background: white; border-bottom: 1px solid #e5e7eb; }
+        .nav-content { max-width: 1280px; margin: 0 auto; padding: 0 24px; display: flex; gap: 32px; }
+        .nav-tab { padding: 16px 8px; border: none; background: none; color: #6b7280; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; }
+        .nav-tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .main-content { max-width: 1280px; margin: 0 auto; padding: 32px 24px; }
+        .search-bar { background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .search-controls { display: flex; gap: 16px; flex-wrap: wrap; }
+        .search-input { flex: 1; min-width: 250px; padding: 10px 16px; border: 1px solid #d1d5db; border-radius: 8px; }
+        .filter-select { padding: 10px 16px; border: 1px solid #d1d5db; border-radius: 8px; }
+        .btn-primary { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-secondary { padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
+        .btn-secondary:hover { background: #4b5563; }
+        .btn-danger { padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-warning { padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-success { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
+        .btn-success:hover { background: #059669; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 24px; }
+        .stat-card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-card p { color: #6b7280; font-size: 14px; margin-bottom: 8px; }
+        .stat-card h2 { font-size: 32px; font-weight: bold; }
+        .stat-card.total h2 { color: #1f2937; }
+        .stat-card.in-service h2 { color: #10b981; }
+        .stat-card.out-repair h2 { color: #f59e0b; }
+        .assets-table { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #f9fafb; }
+        th { padding: 12px 24px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; }
+        td { padding: 16px 24px; border-top: 1px solid #e5e7eb; font-size: 14px; }
+        tr:hover { background: #f9fafb; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge.physical { background: #dbeafe; color: #1e40af; }
+        .badge.digital { background: #e9d5ff; color: #6b21a8; }
+        .badge.in-service { background: #d1fae5; color: #065f46; }
+        .badge.out-repair { background: #fed7aa; color: #92400e; }
+        .btn-view { padding: 6px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn-view:hover { background: #5568d3; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; padding: 20px; overflow-y: auto; }
+        .modal-content { background: white; max-width: 700px; margin: 40px auto; border-radius: 12px; padding: 32px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h2 { font-size: 24px; color: #1f2937; }
+        .btn-close { background: #e5e7eb; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .btn-close:hover { background: #d1d5db; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px; }
+        .detail-item { padding: 16px; background: #f9fafb; border-radius: 8px; }
+        .detail-item label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+        .detail-item p { font-size: 16px; color: #1f2937; font-weight: 600; }
+        .report-section { background: white; border-radius: 8px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .report-header { font-size: 28px; color: #1f2937; margin-bottom: 32px; }
+        .user-report { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .user-header { font-size: 18px; color: #1f2937; margin-bottom: 16px; }
+        .asset-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f9fafb; border-radius: 6px; margin-bottom: 8px; }
+        .asset-info h4 { color: #1f2937; font-size: 14px; margin-bottom: 4px; }
+        .asset-info p { color: #6b7280; font-size: 12px; }
+        .hidden { display: none; }
+        .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
+        .form-buttons { display: flex; gap: 12px; margin-top: 24px; }
+        .form-buttons button { flex: 1; }
+        .action-section { border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 24px; }
+        .action-section h3 { color: #1f2937; font-size: 18px; margin-bottom: 16px; }
+        .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+        .action-buttons button { flex: 1; min-width: 200px; }
+    </style>
+</head>
+<body>
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>📦 Inventory Tracker</h1>
+                <p>Asset Management System MVP</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn-login">Login</button>
+            </form>
+            <div class="demo-credentials">
+                <p><strong>Demo Credentials:</strong></p>
+                <p>Admin: <code>admin / admin123</code></p>
+                <p>Technician: <code>tech / tech123</code></p>
+                <p>User: <code>user / user123</code></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="appContainer" class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>📦 Inventory Tracker MVP</h1>
+                    <p id="userInfo"></p>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </header>
+        <nav class="nav-tabs">
+            <div class="nav-content">
+                <button class="nav-tab active" onclick="showView('dashboard')">Dashboard</button>
+                <button class="nav-tab" onclick="showView('reports')">Reports</button>
+            </div>
+        </nav>
+        <main class="main-content">
+            <div id="dashboardView">
+                <div class="search-bar">
+                    <div class="search-controls">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search by asset tag, serial number, or user..." oninput="filterAssets()">
+                        <select class="filter-select" id="statusFilter" onchange="filterAssets()">
+                            <option value="all">All Status</option>
+                            <option value="In Service">In Service</option>
+                            <option value="Out for Repair">Out for Repair</option>
+                        </select>
+                        <button class="btn-primary hidden" id="addAssetBtn" onclick="openAddAssetForm()">+ Add Asset</button>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card total"><p>Total Assets</p><h2 id="totalAssets">0</h2></div>
+                    <div class="stat-card in-service"><p>In Service</p><h2 id="inServiceCount">0</h2></div>
+                    <div class="stat-card out-repair"><p>Out for Repair</p><h2 id="outRepairCount">0</h2></div>
+                </div>
+                <div class="assets-table">
+                    <table>
+                        <thead><tr><th>Asset Tag</th><th>Type</th><th>Details</th><th>Status</th><th>Assigned To</th><th>Actions</th></tr></thead>
+                        <tbody id="assetsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="reportsView" class="hidden">
+                <div class="report-section">
+                    <h2 class="report-header">📋 Who Has What Report</h2>
+                    <div id="reportContent"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="assetModal" class="modal" onclick="if(event.target===this) closeModal()">
+        <div class="modal-content">
+            <div class="modal-header"><h2>Asset Details</h2><button class="btn-close" onclick="closeModal()">Close</button></div>
+            <div id="assetDetails"></div>
+        </div>
+    </div>
+
+    <div id="addAssetModal" class="modal" onclick="if(event.target===this) closeAddAssetModal()">
+        <div class="modal-content">
+            <div class="modal-header"><h2>Add New Asset</h2><button class="btn-close" onclick="closeAddAssetModal()">Close</button></div>
+            <form id="addAssetForm">
+                <div class="form-group">
+                    <label>Asset Type *</label>
+                    <select id="assetType" required onchange="toggleAssetFields()">
+                        <option value="physical">Physical Asset</option>
+                        <option value="digital">Digital Asset</option>
+                    </select>
+                </div>
+                <div id="physicalFields">
+                    <div class="form-row">
+                        <div class="form-group"><label>Manufacturer *</label><input type="text" id="manufacturer" placeholder="e.g., Dell"></div>
+                        <div class="form-group"><label>Model *</label><input type="text" id="model" placeholder="e.g., Latitude 5520"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Serial Number *</label><input type="text" id="serialNumber" placeholder="e.g., SN123456"></div>
+                        <div class="form-group"><label>Asset Tag *</label><input type="text" id="assetTag" placeholder="e.g., AST-005"></div>
+                    </div>
+                    <div class="form-group"><label>Location *</label><input type="text" id="location" placeholder="e.g., Office 201"></div>
+                </div>
+                <div id="digitalFields" class="hidden">
+                    <div class="form-group"><label>Product Name *</label><input type="text" id="productName" placeholder="e.g., Adobe Creative Cloud"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>License Key *</label><input type="text" id="licenseKey" placeholder="e.g., XXXXX-XXXXX-XXXXX"></div>
+                        <div class="form-group"><label>Version *</label><input type="text" id="version" placeholder="e.g., 2024"></div>
+                    </div>
+                    <div class="form-group"><label>Renewal Date</label><input type="date" id="renewalDate"></div>
+                </div>
+                <div class="form-group">
+                    <label>Assign To *</label>
+                    <select id="assigneeId" required><option value="">Select User</option></select>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-primary">Add Asset</button>
+                    <button type="button" class="btn-secondary" onclick="closeAddAssetModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let ASSETS = [];
+        let USERS = [];
+        
+        async function loadData() {
+            try {
+                const assetsResponse = await fetch('/api/assets/');
+                const assetsData = await assetsResponse.json();
+                ASSETS = assetsData.assets || [];
+                
+                const usersResponse = await fetch('/api/users/');
+                const usersData = await usersResponse.json();
+                USERS = usersData.users || [];
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/login/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    await loadData();
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    document.getElementById('userInfo').textContent = `Logged in as ${currentUser.name} (${currentUser.role})`;
+                    
+                    if (currentUser.role === 'admin' || currentUser.role === 'technician') {
+                        document.getElementById('addAssetBtn').classList.remove('hidden');
+                    }
+                    
+                    renderAssets();
+                } else {
+                    alert('Login failed. Try any username/password for demo.');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed. Please try again.');
+            }
+        });
+        
+        function logout() {
+            currentUser = null;
+            ASSETS = [];
+            USERS = [];
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('loginForm').reset();
+        }
+        
+        function showView(view) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (view === 'dashboard') {
+                document.getElementById('dashboardView').classList.remove('hidden');
+                document.getElementById('reportsView').classList.add('hidden');
+            } else {
+                document.getElementById('dashboardView').classList.add('hidden');
+                document.getElementById('reportsView').classList.remove('hidden');
+                renderReport();
+            }
+        }
+        
+        function filterAssets() {
+            renderAssets();
+        }
+        
+        function renderAssets() {
+            const stats = {
+                total: ASSETS.length,
+                inService: ASSETS.filter(a => a.status === 'In Service').length,
+                outRepair: ASSETS.filter(a => a.status === 'Out for Repair').length
+            };
+            
+            document.getElementById('totalAssets').textContent = stats.total;
+            document.getElementById('inServiceCount').textContent = stats.inService;
+            document.getElementById('outRepairCount').textContent = stats.outRepair;
+            
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            let filteredAssets = ASSETS.filter(asset => {
+                const matchesSearch = searchTerm === '' || 
+                    (asset.manufacturer && asset.manufacturer.toLowerCase().includes(searchTerm)) ||
+                    (asset.model && asset.model.toLowerCase().includes(searchTerm)) ||
+                    (asset.productName && asset.productName.toLowerCase().includes(searchTerm)) ||
+                    (asset.assetTag && asset.assetTag.toLowerCase().includes(searchTerm)) ||
+                    (asset.serialNumber && asset.serialNumber.toLowerCase().includes(searchTerm));
+                
+                const matchesStatus = statusFilter === 'all' || asset.status === statusFilter;
+                
+                return matchesSearch && matchesStatus;
+            });
+            
+            if (currentUser.role === 'user') {
+                filteredAssets = filteredAssets.filter(a => a.assigneeId === currentUser.id);
+            }
+            
+            const tbody = document.getElementById('assetsTableBody');
+            tbody.innerHTML = filteredAssets.map(asset => {
+                const details = asset.type === 'physical' ? `${asset.manufacturer} ${asset.model}` : asset.productName;
+                const identifier = asset.type === 'physical' ? asset.assetTag : asset.licenseKey;
+                
+                return `<tr>
+                    <td>${identifier}</td>
+                    <td><span class="badge ${asset.type}">${asset.type}</span></td>
+                    <td>${details}</td>
+                    <td><span class="badge ${asset.status === 'In Service' ? 'in-service' : 'out-repair'}">${asset.status}</span></td>
+                    <td>${asset.assigneeName}</td>
+                    <td><button class="btn-view" onclick="viewAsset(${asset.id})">View Details</button></td>
+                </tr>`;
+            }).join('');
+        }
+        
+        function viewAsset(id) {
+            const asset = ASSETS.find(a => a.id === id);
+            if (!asset) return;
+            
+            let html = '<div class="detail-grid">';
+            if (asset.type === 'physical') {
+                html += `<div class="detail-item"><label>Manufacturer</label><p>${asset.manufacturer}</p></div>
+                         <div class="detail-item"><label>Model</label><p>${asset.model}</p></div>
+                         <div class="detail-item"><label>Serial Number</label><p>${asset.serialNumber}</p></div>
+                         <div class="detail-item"><label>Asset Tag</label><p>${asset.assetTag}</p></div>
+                         <div class="detail-item"><label>Location</label><p>${asset.location}</p></div>
+                         <div class="detail-item"><label>Date In Service</label><p>${asset.dateInService}</p></div>`;
+            } else {
+                html += `<div class="detail-item"><label>Product Name</label><p>${asset.productName}</p></div>
+                         <div class="detail-item"><label>License Key</label><p>${asset.licenseKey}</p></div>
+                         <div class="detail-item"><label>Version</label><p>${asset.version}</p></div>
+                         <div class="detail-item"><label>Renewal Date</label><p>${asset.renewalDate}</p></div>`;
+            }
+            html += `<div class="detail-item"><label>Status</label><p><span class="badge ${asset.status === 'In Service' ? 'in-service' : 'out-repair'}">${asset.status}</span></p></div>
+                     <div class="detail-item"><label>Assigned To</label><p>${asset.assigneeName || 'Unassigned'}</p></div></div>`;
+            
+            if (asset.repairNotes) {
+                html += `<div class="detail-item" style="grid-column:1/-1;"><label>Repair Notes</label><p>${asset.repairNotes}</p></div>`;
+            }
+            
+            if (currentUser.role === 'admin' || currentUser.role === 'technician') {
+                html += `<div class="action-section"><h3>🔧 Asset Actions</h3><div class="action-buttons">`;
+                if (asset.status === 'In Service') {
+                    html += `<button class="btn-warning" onclick="changeStatus(${asset.id},'Out for Repair')">🔧 Mark as Out for Repair</button>`;
+                } else {
+                    html += `<button class="btn-success" onclick="changeStatus(${asset.id},'In Service')">✅ Return to Service</button>`;
+                }
+                html += `<button class="btn-danger" onclick="deleteAsset(${asset.id})">🗑️ Delete Asset</button></div></div>`;
+            }
+            
+            document.getElementById('assetDetails').innerHTML = html;
+            document.getElementById('assetModal').style.display = 'block';
+        }
+        
+        async function changeStatus(id, newStatus) {
+            const asset = ASSETS.find(a => a.id === id);
+            if (!asset) return;
+            
+            let notes = prompt(newStatus === 'Out for Repair' ? 'Enter repair notes:' : 'Enter completion notes:', 'Repair completed');
+            if (notes === null) return;
+            
+            try {
+                const response = await fetch(`/api/assets/${id}/`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus, repairNotes: notes })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    asset.status = newStatus;
+                    asset.repairNotes = notes;
+                    renderAssets();
+                    closeModal();
+                    alert(`Asset status changed to: ${newStatus}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to update asset');
+            }
+        }
+        
+        async function deleteAsset(id) {
+            if (!confirm('Are you sure you want to delete this asset?')) return;
+            
+            try {
+                const response = await fetch(`/api/assets/${id}/`, { method: 'DELETE' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    ASSETS = ASSETS.filter(a => a.id !== id);
+                    renderAssets();
+                    closeModal();
+                    alert('Asset deleted successfully!');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to delete asset');
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('assetModal').style.display = 'none';
+        }
+        
+        function openAddAssetForm() {
+            document.getElementById('assigneeId').innerHTML = '<option value="">Select User</option>' +
+                USERS.filter(u => u.role === 'user').map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            document.getElementById('addAssetModal').style.display = 'block';
+        }
+        
+        function closeAddAssetModal() {
+            document.getElementById('addAssetModal').style.display = 'none';
+            document.getElementById('addAssetForm').reset();
+        }
+        
+        function toggleAssetFields() {
+            const type = document.getElementById('assetType').value;
+            document.getElementById('physicalFields').classList.toggle('hidden', type !== 'physical');
+            document.getElementById('digitalFields').classList.toggle('hidden', type !== 'digital');
+        }
+        
+        document.getElementById('addAssetForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const type = document.getElementById('assetType').value;
+            const assigneeId = parseInt(document.getElementById('assigneeId').value);
+            const assignee = USERS.find(u => u.id === assigneeId);
+            
+            let newAsset = {
+                type: type,
+                status: 'In Service',
+                assigneeId: assigneeId,
+                assigneeName: assignee ? assignee.name : '',
+                dateInService: new Date().toISOString().split('T')[0],
+                repairNotes: ''
+            };
+            
+            if (type === 'physical') {
+                newAsset.manufacturer = document.getElementById('manufacturer').value;
+                newAsset.model = document.getElementById('model').value;
+                newAsset.serialNumber = document.getElementById('serialNumber').value;
+                newAsset.assetTag = document.getElementById('assetTag').value;
+                newAsset.location = document.getElementById('location').value;
+            } else {
+                newAsset.productName = document.getElementById('productName').value;
+                newAsset.licenseKey = document.getElementById('licenseKey').value;
+                newAsset.version = document.getElementById('version').value;
+                newAsset.renewalDate = document.getElementById('renewalDate').value;
+            }
+            
+            try {
+                const response = await fetch('/api/assets/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newAsset)
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    newAsset.id = data.asset_id;
+                    ASSETS.push(newAsset);
+                    renderAssets();
+                    closeAddAssetModal();
+                    alert('Asset added successfully!');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to add asset');
+            }
+        });
+        
+        function renderReport() {
+            const html = USERS.filter(u => u.role === 'user').map(user => {
+                const userAssets = ASSETS.filter(a => a.assigneeId === user.id);
+                return `<div class="user-report">
+                    <h3 class="user-header">👤 ${user.name} <span class="badge physical">${userAssets.length} assets</span></h3>
+                    ${userAssets.length > 0 
+                        ? userAssets.map(asset => `
+                            <div class="asset-item">
+                                <div class="asset-info">
+                                    <h4>${asset.type === 'physical' ? `${asset.manufacturer} ${asset.model}` : asset.productName}</h4>
+                                    <p>${asset.assetTag || asset.licenseKey}</p>
+                                </div>
+                                <span class="badge ${asset.status === 'In Service' ? 'in-service' : 'out-repair'}">${asset.status}</span>
+                            </div>
+                        `).join('')
+                        : '<p style="color:#6b7280;font-style:italic;">No assets assigned</p>'
+                    }
+                </div>`;
+            }).join('');
+            document.getElementById('reportContent').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
